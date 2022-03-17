@@ -9,6 +9,19 @@ def welcome():
     To start the game please type in your answers for the following to get the output of the Midlib Game
     """)
 
+
+def extract_contents(path):
+    """
+    A function that reads the content of the file that contains the template of the game.
+    """
+    try:
+        with open(path, "r") as template:
+            content = template.read().strip().replace("\n","\n")
+    except FileNotFoundError:
+       raise FileNotFoundError("path not found")
+    else:
+        return content
+        
     
 def get_user_inputs(path):
     """
@@ -18,10 +31,9 @@ def get_user_inputs(path):
         with open(path, "r") as template:
             content = template.read().strip().replace("\n","\n")
     except FileNotFoundError:
-       raise ValueError("path not found")
+       raise FileNotFoundError("path not found")
 
-    input_placeholders= parse_template(content)[0]
-
+    input_placeholders= parse_template(content)[1]
     user_inputs = []
     for placeholder in input_placeholders:
         add_language_part = input(f"type in {placeholder}:")
@@ -41,25 +53,10 @@ def read_template(path):
     """
     try:
         with open(path, "r") as template:
-            content = template.read()
-            print(content)
-    except FileNotFoundError:
-        content = "Error: Sorry, file does not exist"
-    finally:
-        return content
-
-
-def extract_contents(path):
-    """
-    A function that reads the content of the file that contains the template of the game.
-    """
-    try:
-        with open(path, "r") as template:
             content = template.read().strip().replace("\n","\n")
+            return content
     except FileNotFoundError:
-        content = "Error: Sorry, file does not exist"
-    else:
-        return content
+        raise FileNotFoundError("File not found")
 
 
 def parse_template(template_content):
@@ -71,7 +68,7 @@ def parse_template(template_content):
     language_parts = re.findall(r"\{(.*?)\}", template_content)
     for language_part in language_parts:
         template_content = template_content.replace(language_part, "")
-    return [language_parts, template_content]
+    return [template_content, tuple(language_parts)]
 
 
 def merge(bare_template, users_inputs):
@@ -80,15 +77,24 @@ def merge(bare_template, users_inputs):
     Input: bare_template, users_inputs
     Output: String with the language parts from the user
     """
-    for input in users_inputs:
-        user_output = bare_template[1].replace("{}", f"{input}")
-    print(user_output)
+    user_output = str(bare_template).format(*users_inputs)
+    return user_output
     
+
+def write_response(text):
+    print(text)
+    with open("../assets/fill_template", "w") as final_output:
+        final_output.write(text)
+
+
 
 if __name__ == "__main__":
     welcome()
-    user_input = get_user_inputs("assets/madlib_template.txt")
-    read_template("assets/dark_and_stormy_night_template.txt")
-    template_content = extract_contents("assets/madlib_template.txt")
-    bare_template = parse_template(template_content)
-    merge(bare_template, user_input)
+    user_input = get_user_inputs("../assets/dark_and_stormy_night_template.txt")
+    read_template("../assets/dark_and_stormy_night_template.txt")
+    template_content = extract_contents("../assets/dark_and_stormy_night_template.txt")
+    #template_content = extract_contents("../assets/dark_and_stormy_night_template.txt")
+    bare_template = parse_template(template_content)[0]
+    output = merge(bare_template, user_input)
+    write_response(output)
+   
